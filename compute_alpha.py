@@ -22,7 +22,7 @@ class Memoize:
         # .. todo: deepcopy here if returning objects
         return self.memo[args]
 
-def compute_alpha(omega, phi, gamma_p, sigma, rho_0, alpha_h, c_0):
+def compute_alpha(omega, eps_r, mu_r, sigma,  c_0):
     """
     .. warning: $w = 2 \pi f$
     w is called circular frequency
@@ -36,17 +36,19 @@ def compute_alpha(omega, phi, gamma_p, sigma, rho_0, alpha_h, c_0):
     resolution = 12  # := number of elements along L
 
     # parameters of the material (cont.)
-    mu_0 = 1.0
+    mu_0 = 4*np.pi*1e-7
     ksi_0 = 1.0 / (c_0 ** 2)
-    mu_1 = phi / alpha_h
-    ksi_1 = phi * gamma_p / (c_0 ** 2)
-    a = sigma * (phi ** 2) * gamma_p / ((c_0 ** 2) * rho_0 * alpha_h)
+    mu_1 = mu_0 * mu_r
+    ksi_1 = eps_r / (c_0 ** 2)
+    a = sigma * mu_0
 
+    """
     ksi_volume = phi * gamma_p / (c_0 ** 2)
     a_volume = sigma * (phi ** 2) * gamma_p / ((c_0 ** 2) * rho_0 * alpha_h)
     mu_volume = phi / alpha_h
     k2_volume = (1.0 / mu_volume) * ((omega ** 2) / (c_0 ** 2)) * (ksi_volume + 1j * a_volume / omega)
     #print(k2_volume)
+    """
 
     # parameters of the objective function
     A = 1.0
@@ -227,14 +229,12 @@ def run_plot_alpha(material):
 def run():
     print('Running compute_alpha...')
     omega = 30000 # angular frequency
-    phi = 0.7         # porosity
-    gamma_p = 1.4      # specific heat ratio
-    sigma = 142300.0    # flow resistivity (in Rayl/m)
-    rho_0 = 1.21       # air density (in kg/m3)
-    alpha_h = 1.15      # tortuosity
-    c_0 = 340       # speed of sound in air (in m/s)
+    eps_r = 1.0    # relative permittivity
+    mu_r = 1.0     # relative permeability
+    sigma = 0.01   # conductivity
+    c_0 = 3e8      # speed of light in vacuum
     print('Parameters set.')
-    alpha, err_alpha = compute_alpha(omega, phi, gamma_p, sigma, rho_0, alpha_h, c_0)
+    alpha, err_alpha = compute_alpha(omega, eps_r, mu_r , sigma=sigma, c_0=c_0)
     print('alpha = ', alpha)
     print('err_alpha = ', err_alpha)
     return 
