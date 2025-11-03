@@ -231,9 +231,9 @@ def run():
     materials = {
         'charged foam': { #mousse de polyuréthane dopée avec 11.2% (en poids) de nanotubes de carbone, une configuration typique pour un absorbant diélectrique
             "omega" : 2 * np.pi * 1e9 ,
-            "eps_r" : 5.24 ,
+            "eps_r" : 8.65 ,
             "mu_r" : 1.0,
-            "sigma" : 0.00462 ,
+            "sigma" : 0.205 ,
             "c_0" : 3e8 
         },
         'concrete': { 
@@ -246,12 +246,55 @@ def run():
         'ferrite': { #nickel-zinc ferrite
             "omega" : 2 * np.pi * 1e9 ,
             "eps_r" : 10.5 ,
-            "mu_r" : 1.8 -1.1*1j,
-            "sigma" : 0.0083 ,
+            "mu_r" : 10,
+            "sigma" : 0.05 ,
             "c_0" : 3e8 
+        },
+        'copper': {
+            "omega": 2 * np.pi * 1e9,
+            "eps_r": 1.0,
+            "mu_r": 1.0,
+            "sigma": 5.8e7,
+            "c_0": 3e8
+        },
+        'aluminum': {
+            "omega": 2 * np.pi * 1e9,
+            "eps_r": 1.0,
+            "mu_r": 1.0,
+            "sigma": 3.5e7,
+            "c_0": 3e8
+        },
+        'gold': {
+            "omega": 2 * np.pi * 1e9,
+            "eps_r": 1.0,
+            "mu_r": 1.0,
+            "sigma": 4.1e7,
+            "c_0": 3e8
+        },
+        'silver': {
+            "omega": 2 * np.pi * 1e9,
+            "eps_r": 1.0,
+            "mu_r": 1.0,
+            "sigma": 6.3e7,
+            "c_0": 3e8
+        },
+        'steel': {
+            "omega": 2 * np.pi * 1e9,
+            "eps_r": 1.0,
+            "mu_r": 200.0,  # Approximate value for mild steel
+            "sigma": 1.0e6,
+            "c_0": 3e8
+        },
+        'nickel': {
+            "omega": 2 * np.pi * 1e9,
+            "eps_r": 1.0,
+            "mu_r": 300.0,  # Approximate value for nickel
+            "sigma": 1.4e7,
+            "c_0": 3e8
         }
-
+        
     }
+
     plt.figure()
     for material_name, params in materials.items():
         print('Material:', material_name)
@@ -270,11 +313,7 @@ def run():
     plt.ylabel('Im(alpha)')
     plt.legend()
     plt.title('Absorption Coefficient for Different Materials on the complex Plane')
-    plt.show()
-
-
-    
-    
+    plt.show()  
     return 
 
 
