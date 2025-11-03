@@ -227,16 +227,54 @@ def run_plot_alpha(material):
 
 
 def run():
-    print('Running compute_alpha...')
-    omega = 30000 # angular frequency
-    eps_r = 1.0    # relative permittivity
-    mu_r = 1.0     # relative permeability
-    sigma = 0.01   # conductivity
-    c_0 = 3e8      # speed of light in vacuum
-    print('Parameters set.')
-    alpha, err_alpha = compute_alpha(omega, eps_r, mu_r , sigma=sigma, c_0=c_0)
-    print('alpha = ', alpha)
-    print('err_alpha = ', err_alpha)
+    print('Running compute_alpha...\n')
+    materials = {
+        'charged foam': { #mousse de polyuréthane dopée avec 11.2% (en poids) de nanotubes de carbone, une configuration typique pour un absorbant diélectrique
+            "omega" : 2 * np.pi * 1e9 ,
+            "eps_r" : 5.24 ,
+            "mu_r" : 1.0,
+            "sigma" : 0.00462 ,
+            "c_0" : 3e8 
+        },
+        'concrete': { 
+            "omega" : 2 * np.pi * 1e9 ,
+            "eps_r" : 5.24 ,
+            "mu_r" : 1.0,
+            "sigma" : 0.00462 ,
+            "c_0" : 3e8 
+        },
+        'ferrite': { #nickel-zinc ferrite
+            "omega" : 2 * np.pi * 1e9 ,
+            "eps_r" : 10.5 ,
+            "mu_r" : 1.8 -1.1*1j,
+            "sigma" : 0.0083 ,
+            "c_0" : 3e8 
+        }
+
+    }
+    plt.figure()
+    for material_name, params in materials.items():
+        print('Material:', material_name)
+        omega = params["omega"]
+        eps_r = params["eps_r"]
+        mu_r = params["mu_r"]
+        sigma = params["sigma"]
+        c_0 = params["c_0"]
+        alpha, err_alpha = compute_alpha(omega, eps_r,  mu_r, sigma, c_0)
+        print('Parameters set.')
+        print('alpha = ', alpha)
+        print('err_alpha = ', err_alpha, '\n \n')
+        plt.scatter(np.real(alpha), np.imag(alpha), label=material_name, marker='o')
+    plt.grid()
+    plt.xlabel('Re(alpha)')
+    plt.ylabel('Im(alpha)')
+    plt.legend()
+    plt.title('Absorption Coefficient for Different Materials on the complex Plane')
+    plt.show()
+
+
+    
+    
     return 
 
 
