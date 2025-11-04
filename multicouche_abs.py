@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize
 
 eps_r=1.4
 eps_0=8.854e-12
@@ -28,17 +29,55 @@ def reflection_coeff(omega,d,sigmas):
     r = (M_tot[0,0] - eta_0*M_tot[1,0]) / (M_tot[0,0] + eta_0*M_tot[1,0])   
     return r
 
-def calculate_reflectivity(frequencies,d,sigmas):
+def calculate_reflectivity(f,d,sigmas):
     reflectivities = []
-    for f in frequencies:
-        omega = 2*np.pi*f
-        r = reflection_coeff(omega,d,sigmas)
-        R = np.abs(r)**2
-        reflectivities.append(R)
-    return np.array(reflectivities)
-
-
-
-
-# Minimum Reflectivity for sigma values (only parameter varying is sigmas)_optimization(frequencies,d,sigma_ranges,num_layers):
     
+    omega = 2*np.pi*f
+    r = reflection_coeff(omega,d,sigmas)
+    R = np.abs(r)**2
+    return R
+
+
+def calculate_reflectivity(f, d, sigmas):
+    omega = 2 * np.pi * f
+    r = reflection_coeff(omega, d, sigmas)
+    R = np.abs(r)**2
+    return R
+
+def minimize_reflectivity(f, d, initial_sigmas, bounds=None):
+    """
+    Minimise la réflectivité en fonction des conductivités.
+
+    Paramètres
+    ----------
+    f : float
+        Fréquence.
+    d : float
+        Épaisseur de la couche.
+    initial_sigmas : list de taille 3
+        Valeurs initiales pour la conductivité des 3 couches.
+    bounds : list de tuples, optionnel
+        Bornes pour chaque sigma, ex: [(1e-6, 1), (1e-6, 1), (1e-6, 1)]
+
+    Retour
+    ------
+    result : OptimizeResult
+        Résultat de l’optimisation (avec .x pour les sigmas optimaux et .fun pour la réflectivité minimale).
+    """
+
+    # Fonction objectif : la réflectivité à minimiser
+    def objective(sigmas):
+        return calculate_reflectivity(f, d, sigmas)
+
+    # Appel à la fonction d'optimisation
+    result = minimize(
+        objective,
+        x0=np.array(initial_sigmas),
+        bounds=bounds,
+        method='L-BFGS-B',  # méthode adaptée aux bornes et aux problèmes lisses
+        options={'disp': True}
+    )
+
+    return result
+
+print(minimize_reflectivity(10**9, 0.5/3, [0.01, 0.01, 0.01], bounds=[(1e-6, 10), (1e-6, 1), (1e-6, 1)]))
