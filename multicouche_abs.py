@@ -13,9 +13,11 @@ def gamma_i(i,sigmas, omega):
     n_double_prime=-np.sqrt(np.sqrt(eps_r**2 + (sigmas[i]/(omega*eps_0))**2) - eps_r)/np.sqrt(2)
     return (n_prime + 1j*n_double_prime)*omega/c
 
-def M_i(i,gamma_i,d,omega,sigmas):
-    M = np.array([[np.cos(gamma_i(i,sigmas,omega)*d), eta_0/ (1j*eps_r*omega)*np.sin(gamma_i(i,sigmas,omega)*d)],
-                  [1j*eps_r*omega/eta_0*np.sin(gamma_i(i,sigmas,omega)*d), np.cos(gamma_i(i,sigmas,omega)*d)]])
+def M_i(i,d,omega,sigmas):
+    n_prime=np.sqrt(np.sqrt(eps_r**2 + (sigmas[i]/(omega*eps_0))**2) + eps_r)/np.sqrt(2)
+    n_double_prime=-np.sqrt(np.sqrt(eps_r**2 + (sigmas[i]/(omega*eps_0))**2) - eps_r)/np.sqrt(2)
+    M = np.array([[np.cos(gamma_i(i,sigmas,omega)*d), eta_0/(n_prime+1j*n_double_prime) * 1j * np.sin(gamma_i(i,sigmas,omega)*d)],
+                  [1j*(n_prime+1j*n_double_prime)/(eta_0) * np.sin(gamma_i(i,sigmas,omega)*d), np.cos(gamma_i(i,sigmas,omega)*d)]])
     return M
 
 def total_M(omega,d,sigmas):
@@ -29,13 +31,7 @@ def reflection_coeff(omega,d,sigmas):
     r = (M_tot[0,0] - eta_0*M_tot[1,0]) / (M_tot[0,0] + eta_0*M_tot[1,0])   
     return r
 
-def calculate_reflectivity(f,d,sigmas):
-    reflectivities = []
-    
-    omega = 2*np.pi*f
-    r = reflection_coeff(omega,d,sigmas)
-    R = np.abs(r)**2
-    return R
+
 
 
 def calculate_reflectivity(f, d, sigmas):
@@ -75,9 +71,14 @@ def minimize_reflectivity(f, d, initial_sigmas, bounds=None):
         x0=np.array(initial_sigmas),
         bounds=bounds,
         method='L-BFGS-B',  # méthode adaptée aux bornes et aux problèmes lisses
-        options={'disp': True}
-    )
+            )
 
     return result
+f = 10**9  # Fréquence de 1 GHz
+d = 0.5/3  # Épaisseur de la couche
+initial_sigmas = [0.001, 0.001, 0.001]
+resultat = minimize_reflectivity(f, d, initial_sigmas, bounds=[(1e-6, 10), (1e-6, 10), (1e-6, 10)])
 
-print(minimize_reflectivity(10**9, 0.5/3, [0.01, 0.01, 0.01], bounds=[(1e-6, 10), (1e-6, 1), (1e-6, 1)]))
+print("Sigmas optimaux :", resultat.x)
+print("Réflectivité minimale :", resultat.fun)
+print(calculate_reflectivity(f, d, [10e-6,0.1,0.0001]))
