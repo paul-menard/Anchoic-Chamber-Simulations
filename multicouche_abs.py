@@ -38,5 +38,7 @@ def calculate_reflectivity(frequencies,d,sigmas):
     return np.array(reflectivities)
 
 
+
+
 # Minimum Reflectivity for sigma values (only parameter varying is sigmas)_optimization(frequencies,d,sigma_ranges,num_layers):
     
