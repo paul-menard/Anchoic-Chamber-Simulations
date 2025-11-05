@@ -23,12 +23,12 @@ def M_i(i,d,omega,sigmas):
 def total_M(omega,d,sigmas):
     M_tot = np.identity(2)
     for i in range(len(sigmas)):
-        M_tot = np.matmul(M_tot, M_i(i,gamma_i,d,omega,sigmas))
+        M_tot = np.matmul(M_tot, M_i(i,d,omega,sigmas))
     return M_tot
 
 def reflection_coeff(omega,d,sigmas):
     M_tot = total_M(omega,d,sigmas)
-    r = (M_tot[0,0] - eta_0*M_tot[1,0]) / (M_tot[0,0] + eta_0*M_tot[1,0])   
+    r = (M_tot[0,1] - eta_0*M_tot[1,1]) / (M_tot[0,1] + eta_0*M_tot[1,1])   
     return r
 
 
@@ -40,7 +40,7 @@ def calculate_reflectivity(f, d, sigmas):
     R = np.abs(r)**2
     return R
 
-def minimize_reflectivity(f, d, initial_sigmas, bounds=None):
+def minimize_reflectivity(f, d, initial_sigmas, bounds):
     """
     Minimise la réflectivité en fonction des conductivités.
 
@@ -74,11 +74,44 @@ def minimize_reflectivity(f, d, initial_sigmas, bounds=None):
             )
 
     return result
-f = 10**9  # Fréquence de 1 GHz
-d = 0.5/3  # Épaisseur de la couche
-initial_sigmas = [0.001, 0.001, 0.001]
-resultat = minimize_reflectivity(f, d, initial_sigmas, bounds=[(1e-6, 10), (1e-6, 10), (1e-6, 10)])
 
-print("Sigmas optimaux :", resultat.x)
-print("Réflectivité minimale :", resultat.fun)
-print(calculate_reflectivity(f, d, [10e-6,0.1,0.0001]))
+
+f = 2e9  # Fréquence de 2 GHz
+d1 = 0.2/3  # Épaisseur de la couche
+d2 = 0.3/3
+d3 = 0.4/3
+initial_sigmas = [1e-4, 1e-4, 1e-4]
+bounds=[(1e-10, 1), (1e-10, 1), (1e-10, 1)]  # car sigma est compris entre 0 et 1
+
+### on trouve sigma optimal pour une fréquence fixé à 2GHz
+
+resultat1 = minimize_reflectivity(f, d1, initial_sigmas, bounds)
+resultat2 = minimize_reflectivity(f, d2, initial_sigmas, bounds)
+resultat3 = minimize_reflectivity(f, d3, initial_sigmas, bounds)
+
+print("Sigmas optimaux :", resultat1.x)
+print("Réflectivité minimale :", 10*np.log10(resultat1.fun))
+print(calculate_reflectivity(f, d1, resultat1.x))
+print(resultat1.fun)
+
+frequencies = np.logspace(8, 11, 1000)
+R1 = []
+R2 = []
+R3 = []
+for f in frequencies:
+    R1.append(10*np.log10(calculate_reflectivity(f, d1, resultat1.x)))
+    R2.append(10*np.log10(calculate_reflectivity(f, d2, resultat2.x)))
+    R3.append(10*np.log10(calculate_reflectivity(f, d3, resultat3.x)))
+
+plt.figure(figsize=(8,4))
+plt.plot(frequencies, np.array(R1), label='d1')
+plt.plot(frequencies, np.array(R2), label='d2')
+plt.plot(frequencies, np.array(R3), label='d3')
+plt.xscale("log")
+plt.xlabel("Fréquence (Hz)")
+plt.ylabel("Réflectivité (dB)")
+plt.title("Réflectivité en fonction de la fréquence")
+plt.legend()
+plt.grid()
+plt.show()
+
