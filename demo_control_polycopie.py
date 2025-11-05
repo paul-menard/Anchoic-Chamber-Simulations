@@ -14,6 +14,7 @@ import processing
 import postprocessing
 #import solutions
 
+
 def is_in_interest_domain(i, j):
     """
     This function checks if the node (i, j) is in the interest domain (interior + Robin frontier).
@@ -62,6 +63,7 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
     while k < numb_iter and mu > 10 ** -5:
         print('---- iteration number = ', k)
         print('1. computing solution of Helmholtz problem, i.e., u')
+        alpha_rob = chi.copy() * Alpha
         u=processing.solve_helmholtz(domain_omega, spacestep, omega,
                     f, f_dir, f_neu, f_rob,
                     beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
@@ -104,11 +106,10 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
                     l = l+ 1e-5
                 chi_trial = project(l, chi_trial)
                 counter += 1
-            chi = chi_trial.copy()
 
 
             print('    c. computing solution of Helmholtz problem, i.e., u')
-            alpha_rob = chi.copy() * Alpha
+            alpha_rob = chi_trial.copy() * Alpha
             u=processing.solve_helmholtz(domain_omega, spacestep, omega,
                     f, f_dir, f_neu, f_rob,
                     beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
@@ -117,17 +118,17 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
             ene = np.real(compute_objective_function(domain_omega, u, spacestep, mu1, V_0))
             
             if  ene < energy[k]:
+                print('    e. energy decreased, increasing mu and trying again')
                 # The step is increased if the energy decreased
-                mu = mu + 1
+                mu = mu*1.1
             else:
+                print('    e. energy increased, decreasing mu and trying again')
                 # The step is decreased is the energy increased
                 mu = mu / 2
-            print('------------- mu:', mu)
+        chi = chi_trial.copy()
         k += 1
         print('Energy at iteration ', k, ': ', ene)
         
-
-    print('end. computing solution of Helmholtz problem, i.e., u')
 
     return chi, energy, u, grad
 
@@ -177,7 +178,7 @@ if __name__ == '__main__':
     # -- set parameters of the geometry
     N = 150  # number of points along x-axis
     M = 2 * N  # number of points along y-axis
-    level = 2 # level of the fractal
+    level = 1 # level of the fractal
     spacestep = 1.0 / N  # mesh size
 
     # -- set parameters of the partial differential equation
@@ -259,6 +260,56 @@ if __name__ == '__main__':
     #                    beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob,
     #                    Alpha, mu, chi, V_obj, mu1, V_0)
     # --- en of optimization
+
+
+
+
+
+
+    '''
+    # build a binary design by keeping the largest V_obj values of chi
+    (M, N) = numpy.shape(domain_omega)
+    total_cells = M * N
+    n_select = int(max(0, min(total_cells, V_obj)))  # ensure integer and within bounds
+
+    flat_chi = chi.flatten()
+    if n_select == 0:
+        chi = numpy.zeros_like(chi)
+    else:
+        # indices of the largest n_select entries
+        idx = numpy.argsort(flat_chi)[-n_select:]
+        new_flat = numpy.zeros_like(flat_chi)
+        new_flat[idx] = 1.0
+        chi = new_flat.reshape((M, N))
+
+    # compute forward solution with the binarized chi
+    alpha_rob = chi.copy() * Alpha
+    u = processing.solve_helmholtz(domain_omega, spacestep, wavenumber,
+                                   f, f_dir, f_neu, f_rob,
+                                   beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
+
+    # build adjoint right-hand side (same indicator pattern as used previously)
+    fadj_indicator = np.ones_like(f, dtype=complex)
+    for i, j in numpy.ndindex(fadj_indicator.shape):
+        if is_in_interest_domain(i, j):
+            fadj_indicator[i, j] = 2.0 + 0j
+    fadj = -2 * fadj_indicator * np.conj(u)
+
+    # solve adjoint
+    p = processing.solve_helmholtz(domain_omega, spacestep, wavenumber,
+                                   fadj, f_dir, f_neu, f_rob,
+                                   beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
+
+    # gradient and energy for the final design
+    grad = -1 * np.real(Alpha * u * p)
+    energy = np.real(compute_objective_function(domain_omega, u, spacestep, mu1, V_0))
+
+    '''
+
+
+
+
+
 
     chin = chi.copy()
     un = u.copy()
