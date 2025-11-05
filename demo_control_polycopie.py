@@ -266,7 +266,7 @@ if __name__ == '__main__':
 
 
 
-    '''
+
     # build a binary design by keeping the largest V_obj values of chi
     (M, N) = numpy.shape(domain_omega)
     total_cells = M * N
@@ -302,9 +302,9 @@ if __name__ == '__main__':
 
     # gradient and energy for the final design
     grad = -1 * np.real(Alpha * u * p)
-    energy = np.real(compute_objective_function(domain_omega, u, spacestep, mu1, V_0))
+    
 
-    '''
+  
 
 
 
@@ -321,6 +321,8 @@ if __name__ == '__main__':
         energy = energy[:int(_zero_idx[0])].copy()
     print('Chi sum:', numpy.sum(numpy.sum(chin)))
     # -- plot chi, u, and energy
+
+    energy += [np.real(compute_objective_function(domain_omega, u, spacestep, mu1, V_0))]
     postprocessing._plot_uncontroled_solution(u0, chi0)
     postprocessing._plot_controled_solution(un, chin)
     err = un - u0
