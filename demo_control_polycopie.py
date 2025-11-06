@@ -180,7 +180,7 @@ def g(y,omega):
     return np.exp(-y**2)
 
 
-
+"""
 if __name__ == '__main__':
 
     # ----------------------------------------------------------------------
@@ -364,13 +364,14 @@ if __name__ == '__main__':
     postprocessing._plot_energy_history(energy)
 
     print('End.')
+"""
 
 
 
 def plot_energy(start, end):
     N = 50  # number of points along x-axis
     M = 2 * N  # number of points along y-axis
-    level = 0 # level of the fractal
+    level = 2 # level of the fractal
     spacestep = 1.0 / N  # mesh size
 
     # -- set parameters of the partial differential equation
@@ -476,8 +477,7 @@ def plot_energy(start, end):
     plt.show()
     return
 
-"""
+
 if __name__ == '__main__':
-    plot_energy(2.68859e9, 2.688595e9)
+    plot_energy(4.26967e9, 4.2697e9)
     print('End.')
-"""
