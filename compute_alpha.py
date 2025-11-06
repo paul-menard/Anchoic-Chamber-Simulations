@@ -30,10 +30,10 @@ def compute_alpha(omega, eps_r, mu_r, sigma,  c_0):
     """
 
     # parameters of the geometry
-    L = 0.01 # length of the layer
+    L = 0.27 # length of the layer
 
     # parameters of the mesh
-    resolution = 12  # := number of elements along L
+    resolution = 20  # := number of elements along L
 
     # parameters of the material (cont.)
     mu_0 = 4*np.pi*1e-7
@@ -143,7 +143,7 @@ def compute_alpha(omega, eps_r, mu_r, sigma,  c_0):
     def alpha(omega):
         alpha_0 = np.array(complex(40.0, -40.0))
         temp = real_to_complex(scipy.optimize.minimize(lambda z: np.real(sum_e_k(omega)(real_to_complex(z))), complex_to_real(alpha_0), tol=1e-4).x)
-        print(temp, "------", "je suis temp")
+        #print(temp, "------", "je suis temp")
         return temp
 
     @Memoize
@@ -154,7 +154,7 @@ def compute_alpha(omega, eps_r, mu_r, sigma,  c_0):
     temp_alpha = alpha(omega)
     temp_error = error(temp_alpha, omega)
 
-    return temp_alpha, temp_error
+    return temp_alpha #, temp_error
 
 
 def run_compute_alpha(material):
@@ -249,50 +249,7 @@ def run():
             "mu_r" : 10,
             "sigma" : 0.05 ,
             "c_0" : 3e8 
-        },
-        'copper': {
-            "omega": 2 * np.pi * 1e9,
-            "eps_r": 1.0,
-            "mu_r": 1.0,
-            "sigma": 5.8e7,
-            "c_0": 3e8
-        },
-        'aluminum': {
-            "omega": 2 * np.pi * 1e9,
-            "eps_r": 1.0,
-            "mu_r": 1.0,
-            "sigma": 3.5e7,
-            "c_0": 3e8
-        },
-        'gold': {
-            "omega": 2 * np.pi * 1e9,
-            "eps_r": 1.0,
-            "mu_r": 1.0,
-            "sigma": 4.1e7,
-            "c_0": 3e8
-        },
-        'silver': {
-            "omega": 2 * np.pi * 1e9,
-            "eps_r": 1.0,
-            "mu_r": 1.0,
-            "sigma": 6.3e7,
-            "c_0": 3e8
-        },
-        'steel': {
-            "omega": 2 * np.pi * 1e9,
-            "eps_r": 1.0,
-            "mu_r": 200.0,  # Approximate value for mild steel
-            "sigma": 1.0e6,
-            "c_0": 3e8
-        },
-        'nickel': {
-            "omega": 2 * np.pi * 1e9,
-            "eps_r": 1.0,
-            "mu_r": 300.0,  # Approximate value for nickel
-            "sigma": 1.4e7,
-            "c_0": 3e8
         }
-        
     }
 
     plt.figure()
