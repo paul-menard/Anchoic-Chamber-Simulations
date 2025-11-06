@@ -322,7 +322,7 @@ if __name__ == '__main__':
     print('Chi sum:', numpy.sum(numpy.sum(chin)))
     # -- plot chi, u, and energy
 
-    energy += [np.real(compute_objective_function(domain_omega, u, spacestep, mu1, V_0))]
+    energy = np.append(energy,np.real(compute_objective_function(domain_omega, u, spacestep, mu1, V_0)))
     postprocessing._plot_uncontroled_solution(u0, chi0)
     postprocessing._plot_controled_solution(un, chin)
     err = un - u0
