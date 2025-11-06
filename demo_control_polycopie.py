@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-
+import os
+from datetime import datetime
+import pandas as pd
+import numpy as _np
 
 # Python packages
 import matplotlib.pyplot
@@ -13,7 +16,8 @@ import preprocessing
 import processing
 import postprocessing
 #import solutions
-
+import sys
+numpy.set_printoptions(threshold=sys.maxsize)
 
 def is_in_interest_domain(i, j):
     """
@@ -178,7 +182,7 @@ if __name__ == '__main__':
     # -- set parameters of the geometry
     N = 150  # number of points along x-axis
     M = 2 * N  # number of points along y-axis
-    level = 3 # level of the fractal
+    level = 1 # level of the fractal
     spacestep = 1.0 / N  # mesh size
 
     # -- set parameters of the partial differential equation
@@ -224,7 +228,37 @@ if __name__ == '__main__':
     Alpha = 10.0 - 10.0 * 1j
     # -- this is the function you have written during your project
     import alphaget
-    Alpha = alphaget.find_alpha_for_frequency(wavenumber*3e8, g)[0]
+    from compute_alpha import compute_alpha
+
+    materials =  {
+        'charged foam': { #mousse de polyuréthane dopée avec 11.2% (en poids) de nanotubes de carbone, une configuration typique pour un absorbant diélectrique
+            "eps_r" : 8.65 ,
+            "mu_r" : 1.0,
+            "sigma" : 0.205 ,
+            "c_0" : 3e8 
+        },
+        'concrete': { 
+            "eps_r" : 5.24 ,
+            "mu_r" : 1.0,
+            "sigma" : 0.00462 ,
+            "c_0" : 3e8 
+        },
+        'ferrite': { #nickel-zinc ferrite
+            "eps_r" : 10.5 ,
+            "mu_r" : 10,
+            "sigma" : 0.05 ,
+            "c_0" : 3e8 
+        }
+    }
+    material = materials['charged foam']
+    eps_r = material['eps_r']
+    mu_r = material['mu_r']
+    sigma = material['sigma']
+    c_0 = material['c_0']
+    omega = wavenumber * c_0
+
+
+    Alpha = compute_alpha(omega, eps_r, mu_r, sigma, c_0)
     alpha_rob = Alpha * chi
 
     # -- set parameters for optimization
@@ -234,8 +268,9 @@ if __name__ == '__main__':
             if domain_omega[i, j] == _env.NODE_ROBIN:
                 S += 1
     V_0 = 1  # initial volume of the domain
-    #V_obj = numpy.sum(numpy.sum(chi)) / S  # constraint on the density
-    V_obj =  200  # desired volume fraction
+
+    beta = 0.5 # volume fraction
+    V_obj =  S*beta  # desired volume 
     mu = 1  # initial gradient step
     mu1 = 10**(-5)  # parameter of the volume functional
 
@@ -266,7 +301,7 @@ if __name__ == '__main__':
 
 
 
-
+    
     # build a binary design by keeping the largest V_obj values of chi
     (M, N) = numpy.shape(domain_omega)
     total_cells = M * N
@@ -302,7 +337,6 @@ if __name__ == '__main__':
 
     # gradient and energy for the final design
     grad = -1 * np.real(Alpha * u * p)
-    
 
   
 
@@ -322,7 +356,7 @@ if __name__ == '__main__':
     print('Chi sum:', numpy.sum(numpy.sum(chin)))
     # -- plot chi, u, and energy
     print(f"Final energy of the $\chi$ projected")
-    energy = np.append(energy,np.real(compute_objective_function(domain_omega, u, spacestep, mu1, V_0)))
+    #energy = np.append(energy,np.real(compute_objective_function(domain_omega, u, spacestep, mu1, V_0)))
     postprocessing._plot_uncontroled_solution(u0, chi0)
     postprocessing._plot_controled_solution(un, chin)
     err = un - u0
