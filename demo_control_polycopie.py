@@ -8,6 +8,7 @@ import numpy as _np
 import matplotlib.pyplot
 import numpy
 import os
+from compute_alpha import compute_alpha
 from math import pi
 
 # MRG packages
@@ -364,3 +365,5 @@ if __name__ == '__main__':
     postprocessing._plot_energy_history(energy)
 
     print('End.')
+
+
