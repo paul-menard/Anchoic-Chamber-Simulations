@@ -85,7 +85,7 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
         
         print('3. computing objective function, i.e., energy')
         energy[k] = np.real(compute_objective_function(domain_omega, u, spacestep, mu1, V_0))
-
+        chiopti = chi.copy()
         print('4. computing parametric gradient')
         ene = energy[k]
         while ene >= energy[k] and mu > 10 ** -5:
@@ -130,7 +130,7 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
         print('Energy at iteration ', k, ': ', ene)
         
 
-    return chi, energy, u, grad
+    return chiopti, energy, u, grad
 
 
 
@@ -321,8 +321,8 @@ if __name__ == '__main__':
         energy = energy[:int(_zero_idx[0])].copy()
     print('Chi sum:', numpy.sum(numpy.sum(chin)))
     # -- plot chi, u, and energy
-
-    energy += [np.real(compute_objective_function(domain_omega, u, spacestep, mu1, V_0))]
+    print(f"Final energy of the $\chi$ projected")
+    energy = np.append(energy,np.real(compute_objective_function(domain_omega, u, spacestep, mu1, V_0)))
     postprocessing._plot_uncontroled_solution(u0, chi0)
     postprocessing._plot_controled_solution(un, chin)
     err = un - u0
