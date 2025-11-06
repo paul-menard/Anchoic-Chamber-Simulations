@@ -60,27 +60,30 @@ def minimize_reflectivity(f, d, initial_sigmas, bounds):
     result : OptimizeResult
         Résultat de l’optimisation (avec .x pour les sigmas optimaux et .fun pour la réflectivité minimale).
     """
-
+    x0 = np.log10(initial_sigmas)
+    log_bounds = [(np.log10(lo), np.log10(hi)) for lo, hi in bounds]
     # Fonction objectif : la réflectivité à minimiser
-    def objective(sigmas):
+    def objective(x):
+        sigmas = 10**x
         return calculate_reflectivity(f, d, sigmas)
 
     # Appel à la fonction d'optimisation
     result = minimize(
         objective,
-        x0=np.array(initial_sigmas),
-        bounds=bounds,
-        method='L-BFGS-B',  # méthode adaptée aux bornes et aux problèmes lisses
+        x0=x0,
+        bounds=log_bounds,
+        method='L-BFGS-B', 
+        options={'ftol': 1e-10, 'gtol': 1e-10}  # méthode adaptée aux bornes et aux problèmes lisses
             )
-
+    result.x = 10**result.x  # Convertir les sigmas optimaux en échelle linéaire
     return result
 
 
 f = 2e9  # Fréquence de 2 GHz
 d1 = 0.2/3  # Épaisseur de la couche
-d2 = 0.3/3
-d3 = 0.4/3
-initial_sigmas = [1e-4, 1e-4, 1e-4]
+d2 = 0.4/3
+d3 = 0.5/3
+initial_sigmas = [0.1, 0.1, 0.1]
 bounds=[(1e-10, 1), (1e-10, 1), (1e-10, 1)]  # car sigma est compris entre 0 et 1
 
 ### on trouve sigma optimal pour une fréquence fixé à 2GHz
@@ -89,10 +92,13 @@ resultat1 = minimize_reflectivity(f, d1, initial_sigmas, bounds)
 resultat2 = minimize_reflectivity(f, d2, initial_sigmas, bounds)
 resultat3 = minimize_reflectivity(f, d3, initial_sigmas, bounds)
 
-print("Sigmas optimaux :", resultat1.x)
-print("Réflectivité minimale :", 10*np.log10(resultat1.fun))
-print(calculate_reflectivity(f, d1, resultat1.x))
-print(resultat1.fun)
+print("Sigmas1 optimaux :", resultat1.x)
+print("Sigmas2 optimaux :", resultat2.x)
+print("Sigmas3 optimaux :", resultat3.x)
+print("Réflectivité 1 minimale :", 10*np.log10(resultat1.fun))
+print("Réflectivité 2 minimale :", 10*np.log10(resultat2.fun))
+print("Réflectivité 3 minimale :", 10*np.log10(resultat3.fun))  
+print("Sigmas initiaux :", initial_sigmas)
 
 frequencies = np.logspace(8, 11, 1000)
 R1 = []
@@ -104,9 +110,29 @@ for f in frequencies:
     R3.append(10*np.log10(calculate_reflectivity(f, d3, resultat3.x)))
 
 plt.figure(figsize=(8,4))
-plt.plot(frequencies, np.array(R1), label='d1')
-plt.plot(frequencies, np.array(R2), label='d2')
-plt.plot(frequencies, np.array(R3), label='d3')
+plt.plot(frequencies, np.array(R1), label='3*d1 = ' + str(3*d1))
+plt.plot(frequencies, np.array([-15 for _ in frequencies]), label='-15 dB' , linestyle='--', color='grey')
+plt.xscale("log")
+plt.xlabel("Fréquence (Hz)")
+plt.ylabel("Réflectivité (dB)")
+plt.title("Réflectivité en fonction de la fréquence")
+plt.legend()
+plt.grid()
+
+plt.figure(figsize=(8,4))
+plt.plot(frequencies, np.array(R2), label='3*d2 = ' + str(3*d2))
+
+plt.plot(frequencies, np.array([-15 for _ in frequencies]), label='-15 dB' , linestyle='--', color='grey')
+plt.xscale("log")
+plt.xlabel("Fréquence (Hz)")
+plt.ylabel("Réflectivité (dB)")
+plt.title("Réflectivité en fonction de la fréquence")
+plt.legend()
+plt.grid()
+
+plt.figure(figsize=(8,4))
+plt.plot(frequencies, np.array(R3), label='3*d3 = ' + str(3*d3))
+plt.plot(frequencies, np.array([-15 for _ in frequencies]), label='-15 dB' , linestyle='--', color='grey')
 plt.xscale("log")
 plt.xlabel("Fréquence (Hz)")
 plt.ylabel("Réflectivité (dB)")
@@ -114,4 +140,7 @@ plt.title("Réflectivité en fonction de la fréquence")
 plt.legend()
 plt.grid()
 plt.show()
+
+
+
 
