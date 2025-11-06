@@ -2,11 +2,10 @@
 
 
 # Python packages
-import matplotlib.pyplot as plt
+import matplotlib.pyplot
 import numpy
 import os
 from math import pi
-from compute_alpha import compute_alpha
 
 # MRG packages
 import _env
@@ -16,7 +15,7 @@ import postprocessing
 #import solutions
 
 
-def is_in_interest_domain(i, j, spacestep):
+def is_in_interest_domain(i, j):
     """
     This function checks if the node (i, j) is in the interest domain (interior + Robin frontier).
 
@@ -74,7 +73,7 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
         # create fadjoint with ones and a central zone set to 2
         fadjoint = np.ones_like(f, dtype=complex)
         for i,j in numpy.ndindex(fadjoint.shape):
-            if is_in_interest_domain(i, j, spacestep):
+            if is_in_interest_domain(i, j):
                 fadjoint[i, j] = 2.0 + 0j
         
         uconj = np.conj(u)
@@ -83,15 +82,6 @@ def your_optimization_procedure(domain_omega, spacestep, omega, f, f_dir, f_neu,
         p =processing.solve_helmholtz(domain_omega, spacestep, omega,
                     fadjoint, f_dir, f_neu, f_rob,
                     beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
-        
-        # HEATMAP CODE FOR p
-        """
-        plt.figure()
-        plt.imshow(np.abs(p), cmap='jet', interpolation='nearest')
-        plt.colorbar()
-        plt.title(f'Heatmap of |p| at iteration {k}')
-        plt.show()
-        """
         
         print('3. computing objective function, i.e., energy')
         energy[k] = np.real(compute_objective_function(domain_omega, u, spacestep, mu1, V_0))
@@ -157,13 +147,12 @@ def compute_objective_function(domain_omega, u, spacestep, mu1, V_0):
         V_0: float, reference volume.
     """
     # Term 1: ‖u‖²_{L²(Ω)} - Energy over entire domain
-    N, M = domain_omega.shape
     energy_total = numpy.sum(u*numpy.conj(u) * spacestep**2)
     
     # Term 2: ‖1_{Ω_interest}u‖²_{L²(Ω)} - Energy in interest zone
-    interest_domain = numpy.array([[is_in_interest_domain(i, j, spacestep) 
-                                    for j in range(M)] 
-                                    for i in range(N)])
+    interest_domain = numpy.array([[is_in_interest_domain(i, j) 
+                                    for j in range(N)] 
+                                    for i in range(M)])
     energy_interest = numpy.sum(interest_domain * u*numpy.conj(u) * spacestep**2)
     
     # Total objective function
@@ -180,7 +169,7 @@ def g(y,omega):
     return np.exp(-y**2)
 
 
-"""
+
 if __name__ == '__main__':
 
     # ----------------------------------------------------------------------
@@ -235,30 +224,7 @@ if __name__ == '__main__':
     Alpha = 10.0 - 10.0 * 1j
     # -- this is the function you have written during your project
     import alphaget
-    #Alpha = alphaget.find_alpha_for_frequency(wavenumber*3e8, g)[0]
-    materials = {
-        'charged foam': { #mousse de polyuréthane dopée avec 11.2% (en poids) de nanotubes de carbone, une configuration typique pour un absorbant diélectrique
-            "eps_r" : 8.65 ,
-            "mu_r" : 1.0,
-            "sigma" : 0.205 ,
-            "c_0" : 3e8 
-        },
-        'concrete': { 
-            "eps_r" : 5.24 ,
-            "mu_r" : 1.0,
-            "sigma" : 0.00462 ,
-            "c_0" : 3e8 
-        },
-        'ferrite': { #nickel-zinc ferrite
-            "eps_r" : 10.5 ,
-            "mu_r" : 10,
-            "sigma" : 0.05 ,
-            "c_0" : 3e8 
-        }
-    }
-    eps_r, mu_r, sigma,  c_0 = materials['charged foam'].values()
-    omega = wavenumber * c_0
-    Alpha = compute_alpha(omega, eps_r, mu_r, sigma, c_0)
+    Alpha = alphaget.find_alpha_for_frequency(wavenumber*3e8, g)[0]
     alpha_rob = Alpha * chi
 
     # -- set parameters for optimization
@@ -325,7 +291,7 @@ if __name__ == '__main__':
     # build adjoint right-hand side (same indicator pattern as used previously)
     fadj_indicator = np.ones_like(f, dtype=complex)
     for i, j in numpy.ndindex(fadj_indicator.shape):
-        if is_in_interest_domain(i, j, spacestep):
+        if is_in_interest_domain(i, j):
             fadj_indicator[i, j] = 2.0 + 0j
     fadj = -2 * fadj_indicator * np.conj(u)
 
@@ -363,121 +329,4 @@ if __name__ == '__main__':
     postprocessing._plot_error(err)
     postprocessing._plot_energy_history(energy)
 
-    print('End.')
-"""
-
-
-
-def plot_energy(start, end):
-    N = 50  # number of points along x-axis
-    M = 2 * N  # number of points along y-axis
-    level = 2 # level of the fractal
-    spacestep = 1.0 / N  # mesh size
-
-    # -- set parameters of the partial differential equation
-    kx = -1.0
-    ky = -1.0
-    
-    frequencies = numpy.linspace(start, end, num=100)
-    wavenumber = numpy.sqrt(kx**2 + ky**2)  # wavenumber
-    wavenumbers = 2*np.pi*frequencies/(3e8)
-
-    # ----------------------------------------------------------------------
-    # -- Do not modify this cell, these are the values that you will be assessed against.
-    # ----------------------------------------------------------------------
-    # --- set coefficients of the partial differential equation
-    beta_pde, alpha_pde, alpha_dir, beta_neu, alpha_rob, beta_rob = preprocessing._set_coefficients_of_pde(M, N)
-
-    # -- set right hand sides of the partial differential equation
-    f, f_dir, f_neu, f_rob = preprocessing._set_rhs_of_pde(M, N)
-
-    # -- set geometry of domain
-    domain_omega, x, y, _, _ = preprocessing._set_geometry_of_domain(M, N, level)
-
-    # ----------------------------------------------------------------------
-    # -- Fell free to modify the function call in this cell.
-    # ----------------------------------------------------------------------
-    # -- define boundary conditions
-    # planar wave defined on top
-    f_dir[:, :] = 0.0
-    for i in range(N):
-        f_dir[0,i] = 5*numpy.exp(-(i-N/2)**2/2)
-
-    # spherical wave defined on top
-    #f_dir[:, :] = 0.0
-    #f_dir[0, int(N/2)] = 10.0
-
-    # -- initialize
-    alpha_rob[:, :] = - wavenumber * 1j
-
-    # -- define material density matrix
-    chi = preprocessing._set_chi(M, N, x, y)
-    chi = preprocessing.set2zero(chi, domain_omega)
-
-    # -- define absorbing material
-    Alpha = 10.0 - 10.0 * 1j
-    # -- this is the function you have written during your project
-    import alphaget
-    #Alpha = alphaget.find_alpha_for_frequency(wavenumber*3e8, g)[0]
-    materials = {
-        'charged foam': { #mousse de polyuréthane dopée avec 11.2% (en poids) de nanotubes de carbone, une configuration typique pour un absorbant diélectrique
-            "eps_r" : 8.65 ,
-            "mu_r" : 1.0,
-            "sigma" : 0.205 ,
-            "c_0" : 3e8 
-        },
-        'concrete': { 
-            "eps_r" : 5.24 ,
-            "mu_r" : 1.0,
-            "sigma" : 0.00462 ,
-            "c_0" : 3e8 
-        },
-        'ferrite': { #nickel-zinc ferrite
-            "eps_r" : 10.5 ,
-            "mu_r" : 10,
-            "sigma" : 0.05 ,
-            "c_0" : 3e8 
-        }
-    }
-    eps_r, mu_r, sigma,  c_0 = materials['charged foam'].values()
-    omega = wavenumber * c_0
-    Alpha = compute_alpha(omega, eps_r, mu_r, sigma, c_0)
-    alpha_rob = Alpha * chi
-
-    S = 0  # surface of the fractal
-    for i in range(0, M):
-        for j in range(0, N):
-            if domain_omega[i, j] == _env.NODE_ROBIN:
-                S += 1
-    V_0 = 1  # initial volume of the domain
-    #V_obj = numpy.sum(numpy.sum(chi)) / S  # constraint on the density
-    V_obj =  200  # desired volume fraction
-    mu = 1  # initial gradient step
-    mu1 = 10**(-5)  # parameter of the volume functional
-
-    # ----------------------------------------------------------------------
-    # -- Do not modify this cell, these are the values that you will be assessed against.
-    # ----------------------------------------------------------------------
-    # -- compute finite difference solution
-    energies = []
-    for k in wavenumbers:
-        u = processing.solve_helmholtz(domain_omega, spacestep, k, f, f_dir, f_neu, f_rob,
-                            beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
-        chi0 = chi.copy()
-        u0 = u.copy()
-        ene = compute_objective_function(domain_omega, u, spacestep, mu1, V_0)
-        energies.append(ene)
-    plt.figure(figsize=(10, 6))
-    plt.plot(frequencies, energies,'x')
-    plt.title("Energy vs Frequency")
-    plt.xlabel('Frequency (Hz)')
-    plt.ylabel('Energy')
-    plt.grid(which='both', linestyle='--', linewidth=0.5)
-    plt.tight_layout()
-    plt.show()
-    return
-
-
-if __name__ == '__main__':
-    plot_energy(4.26967e9, 4.2697e9)
     print('End.')
