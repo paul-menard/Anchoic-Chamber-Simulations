@@ -27,7 +27,7 @@ def total_M(omega,d,sigmas):
     return M_tot
 
 def reflection_coeff(omega,d,sigmas):
-    M_tot = total_M(omega,d,sigmas)
+    M_tot = M_i(0,d,omega,sigmas)
     r = (M_tot[0,1] - eta_0*M_tot[1,1]) / (M_tot[0,1] + eta_0*M_tot[1,1])   
     return r
 
@@ -80,9 +80,9 @@ def minimize_reflectivity(f, d, initial_sigmas, bounds):
 
 
 f = 2e9  # Fréquence de 2 GHz
-d1 = 0.2/3  # Épaisseur de la couche
-d2 = 0.4/3
-d3 = 0.5/3
+d1 = 0.17  # Épaisseur de la couche
+d2 = 0.4
+d3 = 0.5
 initial_sigmas = [0.1, 0.1, 0.1]
 bounds=[(1e-10, 1), (1e-10, 1), (1e-10, 1)]  # car sigma est compris entre 0 et 1
 
@@ -110,7 +110,7 @@ for f in frequencies:
     R3.append(10*np.log10(calculate_reflectivity(f, d3, resultat3.x)))
 
 plt.figure(figsize=(8,4))
-plt.plot(frequencies, np.array(R1), label='3*d1 = ' + str(3*d1))
+plt.plot(frequencies, np.array(R1), label='d1 = ' + str(d1))
 plt.plot(frequencies, np.array([-15 for _ in frequencies]), label='-15 dB' , linestyle='--', color='grey')
 plt.xscale("log")
 plt.xlabel("Fréquence (Hz)")
@@ -120,7 +120,7 @@ plt.legend()
 plt.grid()
 
 plt.figure(figsize=(8,4))
-plt.plot(frequencies, np.array(R2), label='3*d2 = ' + str(3*d2))
+plt.plot(frequencies, np.array(R2), label='d2 = ' + str(d2))
 
 plt.plot(frequencies, np.array([-15 for _ in frequencies]), label='-15 dB' , linestyle='--', color='grey')
 plt.xscale("log")
@@ -131,7 +131,7 @@ plt.legend()
 plt.grid()
 
 plt.figure(figsize=(8,4))
-plt.plot(frequencies, np.array(R3), label='3*d3 = ' + str(3*d3))
+plt.plot(frequencies, np.array(R3), label='d3 = ' + str(d3))
 plt.plot(frequencies, np.array([-15 for _ in frequencies]), label='-15 dB' , linestyle='--', color='grey')
 plt.xscale("log")
 plt.xlabel("Fréquence (Hz)")
