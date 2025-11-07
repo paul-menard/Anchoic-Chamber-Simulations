@@ -285,9 +285,9 @@ def plot_energy_around_optimal(freq_start, freq_end, n_points=100,
         method: str, 'bounded' for scipy optimization or 'grid' for grid search
     """
     # Setup problem parameters
-    N = 50
+    N = 100
     M = 2 * N
-    level = 3
+    level = 2
     spacestep = 1.0 / N
     
     # Set coefficients
@@ -380,9 +380,9 @@ def plot_energy_around_optimal(freq_start, freq_end, n_points=100,
     return optimal_freq, max_energy
 
 def plot_energy(start, end):
-    N = 200  # number of points along x-axis
+    N = 100  # number of points along x-axis
     M = 2 * N  # number of points along y-axis
-    level = 0  # level of the fractal
+    level = 3  # level of the fractal
     spacestep = 1.0 / N  # mesh size
 
     # -- set parameters of the partial differential equation
@@ -425,10 +425,12 @@ def plot_energy(start, end):
     chi = preprocessing._set_chi(M, N, x, y)
     chi = preprocessing.set2zero(chi, domain_omega)
 
+    """
     for i in range(M):
         for j in range(N):
             if domain_omega[i, j] == _env.NODE_ROBIN:
                 chi[i, j] = 1
+    """
 
     # -- define absorbing material
     Alpha = 10.0 - 10.0 * 1j
@@ -496,23 +498,23 @@ def plot_energy(start, end):
     # Highlight the maximum energy point with a vertical line
     plt.axvline(x=max_frequency, color='red', linestyle='--', label=f'Max Energy: {max_energy:.2f} at {max_frequency:.2e} Hz')
 
-    plt.title("Energy vs Frequency")
+    plt.title(f"Energy vs Frequency for fractal level {level}\nMax Energy at {max_frequency:.4e} Hz", fontsize=14)
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Energy')
     plt.grid(which='both', linestyle='-', linewidth=0.5)
     plt.legend()
     plt.tight_layout()
     plt.show()
-
+    plot_abs_heatmap(u)
     postprocessing._plot_uncontroled_solution(u, chi)
     return
 
 
 
 def plot_solution(N, freq, L = 1):
-    N = 200  # number of points along x-axis
+    N = 100  # number of points along x-axis
     M = 2 * N  # number of points along y-axis
-    level = 3  # level of the fractal
+    level = 0  # level of the fractal
     spacestep = 1.0 / N  # mesh size
 
     # -- set parameters of the partial differential equation
@@ -618,7 +620,7 @@ def plot_abs_heatmap(u):
 def compare_chi_random_to_everwhere(start, end, n_points=100):
     N = 100  # number of points along x-axis
     M = 2 * N  # number of points along y-axis
-    level = 0  # level of the fractal
+    level = 2  # level of the fractal
     spacestep = 1.0 / N  # mesh size
 
     # -- set parameters of the partial differential equation
@@ -699,8 +701,8 @@ def compare_chi_random_to_everwhere(start, end, n_points=100):
 
      # Plot the energy comparison
     plt.figure(figsize=(10, 6))
-    plt.plot(frequencies, random_energies, 'r--', label='Random chi')
-    plt.plot(frequencies, everywhere_energies, 'b-', label='Chi = 1')
+    plt.plot(frequencies, random_energies, 'r-x', label='Random chi')
+    plt.plot(frequencies, everywhere_energies, 'b-x', label='Chi = 1')
     plt.title("Energy Comparison for Different Chi Configurations")
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Energy')
@@ -854,23 +856,25 @@ def optimize_local_maxima(start, end, n_samples=20):
 
 
 if __name__ == '__main__':
-    """
+    
     # Example usage: find and plot optimal frequency
-    freq_start = 2.90835e9  # Start frequency in Hz 5.222215e9 
-    freq_end = 2.9084e9     # End frequency in Hz 5.22225e
-    plot_energy(freq_start, freq_end)
+    freq_start = 1.67e9  # Start frequency in Hz 5.222215e9 
+    freq_end = 1.69e9     # End frequency in Hz 5.22225e
+    #plot_energy(freq_start, freq_end)
     
     #plot_solution(N=200, freq=2.908375e9)
-    compare_chi_random_to_everwhere(start=0.5e9, end=6e9, n_points=100)
-    """
+    compare_chi_random_to_everwhere(freq_start, freq_end, n_points=100)
+    
     print('End.')
     
 
 if __name__ == '__main__':
+    """
     # Optimize for frequencies between 0.5 GHz and 6 GHz
     chi_opt, freq_opt, energy_opt, history = optimize_local_maxima(
         start=0.5e9, 
         end=6e9, 
         n_samples=30  # Number of frequencies to sample when finding maximum
     )
+    """
     print('End.')
