@@ -181,17 +181,18 @@ if __name__ == '__main__':
     # -- Fell free to modify the function call in this cell.
     # ----------------------------------------------------------------------
     # -- set parameters of the geometry
-    N = 150  # number of points along x-axis
+    N = 100  # number of points along x-axis
     M = 2 * N  # number of points along y-axis
-    level = 1 # level of the fractal
+    level = 3# level of the fractal
     spacestep = 1.0 / N  # mesh size
 
     # -- set parameters of the partial differential equation
     kx = -1.0
     ky = -1.0
     
+    freq = 2.22525e9
     wavenumber = numpy.sqrt(kx**2 + ky**2)  # wavenumber
-    wavenumber = 5.55874e9*2*pi/(3e8)
+    wavenumber = 5.55874e9*2*np.pi/(3e8)
 
     # ----------------------------------------------------------------------
     # -- Do not modify this cell, these are the values that you will be assessed against.
@@ -270,7 +271,7 @@ if __name__ == '__main__':
                 S += 1
     V_0 = 1  # initial volume of the domain
 
-    beta = 0.5 # volume fraction
+    beta = 0.7 # volume fraction
     V_obj =  S*beta  # desired volume 
     mu = 1  # initial gradient step
     mu1 = 10**(-5)  # parameter of the volume functional
@@ -305,18 +306,35 @@ if __name__ == '__main__':
     
     # build a binary design by keeping the largest V_obj values of chi
     (M, N) = numpy.shape(domain_omega)
-    total_cells = M * N
-    n_select = int(max(0, min(total_cells, V_obj)))  # ensure integer and within bounds
+
+    # Create a mask for Robin boundary nodes
+    robin_mask = (domain_omega == _env.NODE_ROBIN)
+
+    # Apply optimization result only to Robin nodes
+    chi_robin = chi * robin_mask
+
+    # Flatten and get indices
+    flat_chi_robin = chi_robin.flatten()
+    robin_indices = numpy.where(robin_mask.flatten())[0]
+
+    # Select top V_obj values ONLY from Robin boundary
+    n_select = int(min(len(robin_indices), V_obj))
 
     flat_chi = chi.flatten()
-    if n_select == 0:
-        chi = numpy.zeros_like(chi)
-    else:
-        # indices of the largest n_select entries
-        idx = numpy.argsort(flat_chi)[-n_select:]
-        new_flat = numpy.zeros_like(flat_chi)
-        new_flat[idx] = 1.0
+    if n_select > 0:
+        # Get chi values only at Robin nodes
+        chi_values_at_robin = flat_chi_robin[robin_indices]
+        # Sort and get top n_select
+        top_indices_in_robin = numpy.argsort(chi_values_at_robin)[-n_select:]
+        # Map back to global indices
+        global_indices = robin_indices[top_indices_in_robin]
+        
+        # Create binary chi
+        new_flat = numpy.zeros_like(flat_chi_robin)
+        new_flat[global_indices] = 1.0
         chi = new_flat.reshape((M, N))
+    else:
+        chi = numpy.zeros_like(chi)
 
     # compute forward solution with the binarized chi
     alpha_rob = chi.copy() * Alpha
