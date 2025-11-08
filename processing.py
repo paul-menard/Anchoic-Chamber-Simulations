@@ -581,12 +581,12 @@ def compute_gradient_descent(chi, grad, domain, mu):
 			c = BelongsInteriorDomain(domain[i, j + 1])
 			d = BelongsInteriorDomain(domain[i, j - 1])
 			if a == 2:
-				chi[i + 1, j] = chi[i + 1, j] - mu * grad[i, j]
+				chi[i + 1, j] = chi[i + 1, j] + mu * grad[i, j]
 			if b == 2:
-				chi[i - 1, j] = chi[i - 1, j] - mu * grad[i, j]
+				chi[i - 1, j] = chi[i - 1, j] + mu * grad[i, j]
 			if c == 2:
-				chi[i, j + 1] = chi[i, j + 1] - mu * grad[i, j]
+				chi[i, j + 1] = chi[i, j + 1] + mu * grad[i, j]
 			if d == 2:
-				chi[i, j - 1] = chi[i, j - 1] - mu * grad[i, j]
+				chi[i, j - 1] = chi[i, j - 1] + mu * grad[i, j]
 
 	return chi
